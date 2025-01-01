@@ -36,6 +36,7 @@ def convertVCD(cuePath, attempt = 1):
         return    
     
     print('[SETUP] Conversion process complete!')
+    return cuePath.replace('.cue', '.VCD')
 
 # Download POPStarter package according to setup type (usb, smb, hdd)
 def get_popstarter(setup_type):
@@ -90,18 +91,40 @@ def get_popstarter(setup_type):
     print(f'[SETUP] Extraction complete!')
 
 # Create "POPS" folder and put all files there ("POPS_IOX.PAK", VCD files and POPStarter ELFs for each VCD files)
-def create_popsFolder(popsIox_path, games: list):
+def create_popsFolder(popsIox_path, games):
 
     # Check if "POPS" folder is already created
     if os.path.exists(f'{root}\\POPS'):        
-        print('[SETUP] POPS folder found! Skipping download process...')
+        print('[SETUP] POPS folder found! Please, delete it to continue.')
         return
 
-    # Create POPS folder and move "POPS_IOX" to it        
+    # Create POPS folder and move "POPS_IOX" to it
+    print('[SETUP] Creating POPS folder...')
     os.makedirs(f'{root}\\POPS')
-    shutil.copy(f'{root}\\POPS_IOX.PAK', f'{root}\\POPS\\POPS_IOX.PAK')
+
+    if os.path.exists(f'{root}\\POPS_IOX.PAK'):
+        shutil.copy(f'{root}\\POPS_IOX.PAK', f'{root}\\POPS\\POPS_IOX.PAK')
+    else:
+        print('[SETUP] "POPS_IOX.PAK" not detected! Please put "POPS_IOX.PAK" file on the root of CidPOPS folder.')
+        return
 
     # Move games to "POPS" folder and create a POPStarter ELF for each one
-    for game in games:
-        if str(game).find('.cue'):
-            convertVCD(game)
+    print('[SETUP] Moving games to "POPS" folder...')
+    if type(games) == str:
+        _games = []
+        for file in os.listdir(games):
+            if str(file.lower()).find('.cue') != -1 or str(file.lower()).find('.vcd') != -1:
+                _games.append(f'{games}\\{file}')
+        games = _games
+    for gamePath in games:
+        game_name = gamePath[gamePath.rfind('\\') + 1:]
+        print(f'[SETUP] Moving "{game_name}" to "POPS" folder...')
+        if str(gamePath).find('.cue') != -1:
+            gamePath = convertVCD(gamePath)
+            game_name = game_name.replace('.cue', '.VCD')
+            print('[SETUP] Resuming copying process...')
+        shutil.copy(gamePath, f'{root}\\POPS\\{game_name}')
+        print(f'[SETUP] Game copied!')
+        print(f'[SETUP] Creating POPStarter ELF file...')
+        shutil.copy(f'{root}\\POPStarter_Quickstarter\\POPSTARTER.ELF', f'{root}\\POPS\\XX.{game_name.replace('.VCD', '')}.ELF')            
+        print(f'[SETUP] POPStarter ELF file created!')
