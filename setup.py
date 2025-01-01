@@ -10,11 +10,19 @@ root = os.path.dirname(os.path.abspath(__file__))
 
 # Merge Track files
 def mergeTracks(cuePath):
-    return
+    binmerge = f'{root}\\tool\\binmerge.exe'
+
+    print('[SETUP] Starting merging process...')
+    filename = cuePath[cuePath.rfind('\\') + 1:].replace('.cue', '')
+    mergedPath = f'{cuePath[:cuePath.rfind('\\')]}\\{filename}_Merged'
+    if not os.path.exists(mergedPath):
+        os.makedirs(mergedPath)
+    os.system(f'{binmerge} -o "{mergedPath}" "{cuePath}" "{filename}"')
+    print('[SETUP] Merge complete!')
+    return f'{mergedPath}\\{filename}.cue'
 
 # Convert CUE files to VCD
 def convertVCD(cuePath, attempt = 1):
-        
     if attempt == 1:
         print(f'[SETUP] Starting VCD conversion process ({cuePath})...')
     elif attempt != 3:
@@ -30,10 +38,9 @@ def convertVCD(cuePath, attempt = 1):
     # Treatment for Multi-Track CUE file
     if str(out).find('splitted dumps') != -1:
         print('[SETUP] Multi-Track file detected! Starting merging process...')
-        mergeTracks(cuePath)
+        cuePath = mergeTracks(cuePath)
         attempt += 1
-        convertVCD(cuePath, attempt)
-        return    
+        return convertVCD(cuePath, attempt)
     
     print('[SETUP] Conversion process complete!')
     return cuePath.replace('.cue', '.VCD')
