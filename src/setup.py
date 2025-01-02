@@ -3,7 +3,7 @@ import wget
 import zipfile
 import shutil
 import os
-import src.tools as tools
+import src.tool as tool
 from bs4 import BeautifulSoup
 
 root = os.path.dirname(os.path.abspath(__file__)).replace('\\src', '')
@@ -103,7 +103,7 @@ def get_popstarter(setupType = 'usb'):
     print(f'[SETUP] Extraction complete!')
 
 # Create "POPS" folder and put all files there ("POPS_IOX.PAK", VCD files and POPStarter ELFs for each VCD files)
-def create_popsFolder(popsIox_path, popstarterElf_path, games, setupType = 'usb'):
+def create_popsFolder(popsIox_path, games, setupType = 'usb'):
 
     # Check if setup folder exists
     if setupType == 'usb':
@@ -143,11 +143,11 @@ def create_popsFolder(popsIox_path, popstarterElf_path, games, setupType = 'usb'
         game_name = gamePath[gamePath.rfind('\\') + 1:]
         print(f'[SETUP] Moving "{game_name}" to "POPS" folder...')
         if str(gamePath).find('.cue') != -1:
-            gamePath = tools.convert_VCD(gamePath)
+            gamePath = tool.convert_VCD(gamePath)
             game_name = game_name.replace('.cue', '.VCD')
             print('[SETUP] Resuming copying process...')
         shutil.copy(gamePath, f'{setupFolder}\\POPS\\{game_name}')
         print(f'[SETUP] Game copied!')
         print(f'[SETUP] Creating POPStarter ELF file...')
-        shutil.copy(f'{root}\\POPStarter_Quickstarter\\POPSTARTER.ELF', f'{root}\\POPS\\XX.{game_name.replace('.VCD', '')}.ELF')            
+        shutil.copy(f'{setupFolder}\\POPStarter_Quickstarter\\POPSTARTER.ELF', f'{setupFolder}\\POPS\\XX.{game_name.replace('.VCD', '')}.ELF')            
         print(f'[SETUP] POPStarter ELF file created!')
