@@ -7,6 +7,7 @@ A tool to set up your POPS! Created based on the quickstart created by ShaolinAs
  - Merging of multiple tracks (binmerge).
  - Creation of POPSTARTER files for each VCD.
  - Automatic writing of the "conf_apps.cfg" file for POPS access in OPL.
+
 ## Usage/Example
 
 Currently, it is only possible to use CidPOPS on Windows OS through a terminal. Additionally, I have only programmed the setup for USB, but in the near future, I will be programming setups for SMB and HDD. Below is the help text for the program:
@@ -47,7 +48,6 @@ Ex.: CidPOPS.exe "D:\Games\PS1"
 ```
 
 If you are using OPL, you can add the tag "--ps1_pfx" after the path to the game folder so that the shortcuts created in the "conf_apps.cfg" file have the prefix "PS1 - ":
-
 
 ```
 CidPOPS.exe "D:\Games\PS1" --ps1_pfx
@@ -93,13 +93,16 @@ Ex.: CidPOPS.exe -m "D:\Games\PS1\Crash Bandicoot (USA).cue"
 ```
 
 After that, in the same folder as the CUE file, another folder with the "_Merged" tag will be created. Inside it, you will find the new CUE file with the single merged track.
+
 ## Future Improvements
+
  - Automated setup for SMB and HDD.
  - GUI using the Tkinter library.
  - Deep verification of CUE and BIN files to prevent errors.
-
+ - Automated multi-disc setup.
 
 ## Credits and Acknowledgements
+
 My sincere thanks to the developers of the tools that contribute to CidPOPS and key people from the Sony PlayStation 2 community:
 
 - [@israpps](https://github.com/israpps) (CUE2POPS)
