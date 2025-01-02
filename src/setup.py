@@ -1,3 +1,4 @@
+# Build import sys
 import requests
 import wget
 import zipfile
@@ -7,9 +8,10 @@ import src.tool as tool
 from bs4 import BeautifulSoup
 
 root = os.path.dirname(os.path.abspath(__file__)).replace('\\src', '')
+# Build root = os.path.dirname(os.path.abspath(sys.argv[0].replace('\\CidPOPS.exe', '')))
 
 # Create "conf_apps" with all paths requested
-def opl_setup(games: list, ps1_pfx: bool = True, setupType = 'usb'):
+def opl_setup(ps1_pfx: bool = True, setupType = 'usb'):
 
     # Check if setup folder exists
     if setupType == 'usb':
@@ -18,15 +20,21 @@ def opl_setup(games: list, ps1_pfx: bool = True, setupType = 'usb'):
         setupFolder = f'{root}\\SMB'
     if setupType == 'hdd':
         setupFolder = f'{root}\\HDD'
+
     if not os.path.exists(setupFolder):
-        print('[SETUP] Creating setup folder...')
-        os.makedirs(setupFolder)
+        print(f'[SETUP] Setup folder ({setupFolder}) not found!')
+        return
 
     if os.path.exists(f'{setupFolder}\\conf_apps.cfg'):
         os.remove(f'{setupFolder}\\conf_apps.cfg')
+
+    gameElfs = []
+    for file in os.listdir(f'{setupFolder}\\POPS'):
+        if str(file).find(".ELF") != -1:
+            gameElfs.append(file)
     
     print('[SETUP] Creating "conf_apps.cfg" file...')
-    for game in games:
+    for game in gameElfs:
         shortcutName = str(game).replace('XX.', '').replace('.ELF', '')
         if ps1_pfx:
             shortcutName = f'PS1 - {shortcutName}'
