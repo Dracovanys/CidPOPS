@@ -1,55 +1,60 @@
 import requests
 import wget
 import zipfile
-import subprocess
 import shutil
 import os
+import src.tools as tools
 from bs4 import BeautifulSoup
 
-root = os.path.dirname(os.path.abspath(__file__))
+root = os.path.dirname(os.path.abspath(__file__)).replace('\\src', '')
 
-# Merge Track files
-def mergeTracks(cuePath):
-    binmerge = f'{root}\\tool\\binmerge.exe'
+# Create "conf_apps" with all paths requested
+def opl_setup(games: list, ps1_pfx: bool = True, setupType = 'usb'):
 
-    print('[SETUP] Starting merging process...')
-    filename = cuePath[cuePath.rfind('\\') + 1:].replace('.cue', '')
-    mergedPath = f'{cuePath[:cuePath.rfind('\\')]}\\{filename}_Merged'
-    if not os.path.exists(mergedPath):
-        os.makedirs(mergedPath)
-    os.system(f'{binmerge} -o "{mergedPath}" "{cuePath}" "{filename}"')
-    print('[SETUP] Merge complete!')
-    return f'{mergedPath}\\{filename}.cue'
+    # Check if setup folder exists
+    if setupType == 'usb':
+        setupFolder = f'{root}\\USB'
+    if setupType == 'smb':
+        setupFolder = f'{root}\\SMB'
+    if setupType == 'hdd':
+        setupFolder = f'{root}\\HDD'
+    if not os.path.exists(setupFolder):
+        print('[SETUP] Creating setup folder...')
+        os.makedirs(setupFolder)
 
-# Convert CUE files to VCD
-def convertVCD(cuePath, attempt = 1):
-    if attempt == 1:
-        print(f'[SETUP] Starting VCD conversion process ({cuePath})...')
-    elif attempt != 3:
-        print(f'[SETUP] Restarting conversion process ({cuePath})...')
-    else:
-        print('[SETUP] 2 conversion attempts failed. Skipping CUE file...')
-        return
-
-    # Converting CUE file to VCD
-    cmd = subprocess.Popen(f'cmd /k {root}\\tool\\CUE2POPS\\CUE2POPS.EXE "{cuePath}"', shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    out, err = cmd.communicate()
-
-    # Treatment for Multi-Track CUE file
-    if str(out).find('splitted dumps') != -1:
-        print('[SETUP] Multi-Track file detected! Starting merging process...')
-        cuePath = mergeTracks(cuePath)
-        attempt += 1
-        return convertVCD(cuePath, attempt)
+    if os.path.exists(f'{setupFolder}\\conf_apps.cfg'):
+        os.remove(f'{setupFolder}\\conf_apps.cfg')
     
-    print('[SETUP] Conversion process complete!')
-    return cuePath.replace('.cue', '.VCD')
+    print('[SETUP] Creating "conf_apps.cfg" file...')
+    for game in games:
+        shortcutName = str(game).replace('XX.', '').replace('.ELF', '')
+        if ps1_pfx:
+            shortcutName = f'PS1 - {shortcutName}'
+        with open(f'{setupFolder}\\conf_apps.cfg', 'a') as file:
+            if setupType == 'usb':
+                file.write(f'{shortcutName}=mass:/POPS/{game}\n')
+            if setupType == 'hdd':
+                file.write(f'{shortcutName}=hdd:/POPS/{game}\n')
+            if setupType == 'smb':
+                file.write(f'{shortcutName}=smb:/POPS/{game}\n')
+    return
 
 # Download POPStarter package according to setup type (usb, smb, hdd)
-def get_popstarter(setup_type):
+def get_popstarter(setupType = 'usb'):
+
+    # Check if setup folder exists
+    if setupType == 'usb':
+        setupFolder = f'{root}\\USB'
+    if setupType == 'smb':
+        setupFolder = f'{root}\\SMB'
+    if setupType == 'hdd':
+        setupFolder = f'{root}\\HDD'
+    if not os.path.exists(setupFolder):        
+        print('[SETUP] Creating setup folder...')
+        os.makedirs(setupFolder)
 
     # Check if POPStarter Quickstarter package is already downloaded
-    if os.path.exists(f'{root}\\POPStarter_Quickstarter'):
+    if os.path.exists(f'{setupFolder}\\POPStarter_Quickstarter'):
         print('[SETUP] POPStarter_Quickstarter folder found! Skipping download process...')
         return
 
@@ -69,48 +74,59 @@ def get_popstarter(setup_type):
                 print(f'[SETUP] HDD Package found: {hdd_file}')
 
     # Download and extract POPStarter package
-    print(f'[SETUP] Downloading {str(setup_type).upper()} Quickstarter Package...')
-    if setup_type == 'usb':
+    print(f'[SETUP] Downloading {str(setupType).upper()} Quickstarter Package...')
+    if setupType == 'usb':
         wget.download(f'https://bitbucket.org/ShaolinAssassin/popstarter-documentation-stuff/downloads/{usb_file}')
         print(f'\n[SETUP] Download complete!')
         print(f'[SETUP] Extracting {usb_file}...')
         with zipfile.ZipFile(usb_file, 'r') as zip_ref:
-            zip_ref.extractall(root)
+            zip_ref.extractall(setupFolder)
         os.remove(usb_file)
         file = usb_file.replace('.zip', '')
-    if setup_type == 'smb':
+    if setupType == 'smb':
         wget.download(f'https://bitbucket.org/ShaolinAssassin/popstarter-documentation-stuff/downloads/{smb_file}')
         print(f'\n[SETUP] Download complete!')
         print(f'[SETUP] Extracting {smb_file}...')
         with zipfile.ZipFile(smb_file, 'r') as zip_ref:
-            zip_ref.extractall(root)
+            zip_ref.extractall(setupFolder)
         os.remove(smb_file)
         file = smb_file.replace('.zip', '')
-    if setup_type == 'hdd':
+    if setupType == 'hdd':
         wget.download(f'https://bitbucket.org/ShaolinAssassin/popstarter-documentation-stuff/downloads/{hdd_file}')
         print(f'\n[SETUP] Download complete!')
         print(f'[SETUP] Extracting {hdd_file}...')
         with zipfile.ZipFile(hdd_file, 'r') as zip_ref:
-            zip_ref.extractall(root)
+            zip_ref.extractall(setupFolder)
         os.remove(hdd_file)
         file = hdd_file.replace('.zip', '')    
-    os.rename(f'{root}\\{file}', f'{root}\\POPStarter_Quickstarter')    
+    os.rename(f'{setupFolder}\\{file}', f'{setupFolder}\\POPStarter_Quickstarter')    
     print(f'[SETUP] Extraction complete!')
 
 # Create "POPS" folder and put all files there ("POPS_IOX.PAK", VCD files and POPStarter ELFs for each VCD files)
-def create_popsFolder(popsIox_path, games):
+def create_popsFolder(popsIox_path, popstarterElf_path, games, setupType = 'usb'):
+
+    # Check if setup folder exists
+    if setupType == 'usb':
+        setupFolder = f'{root}\\USB'
+    if setupType == 'smb':
+        setupFolder = f'{root}\\SMB'
+    if setupType == 'hdd':
+        setupFolder = f'{root}\\HDD'
+    if not os.path.exists(setupFolder):
+        print('[SETUP] Creating setup folder...')
+        os.makedirs(setupFolder)
 
     # Check if "POPS" folder is already created
-    if os.path.exists(f'{root}\\POPS'):        
+    if os.path.exists(f'{setupFolder}\\POPS'):        
         print('[SETUP] POPS folder found! Please, delete it to continue.')
         return
 
     # Create POPS folder and move "POPS_IOX" to it
     print('[SETUP] Creating POPS folder...')
-    os.makedirs(f'{root}\\POPS')
+    os.makedirs(f'{setupFolder}\\POPS')
 
-    if os.path.exists(f'{root}\\POPS_IOX.PAK'):
-        shutil.copy(f'{root}\\POPS_IOX.PAK', f'{root}\\POPS\\POPS_IOX.PAK')
+    if os.path.exists(popsIox_path):
+        shutil.copy(popsIox_path, f'{setupFolder}\\POPS\\POPS_IOX.PAK')
     else:
         print('[SETUP] "POPS_IOX.PAK" not detected! Please put "POPS_IOX.PAK" file on the root of CidPOPS folder.')
         return
@@ -127,10 +143,10 @@ def create_popsFolder(popsIox_path, games):
         game_name = gamePath[gamePath.rfind('\\') + 1:]
         print(f'[SETUP] Moving "{game_name}" to "POPS" folder...')
         if str(gamePath).find('.cue') != -1:
-            gamePath = convertVCD(gamePath)
+            gamePath = tools.convert_VCD(gamePath)
             game_name = game_name.replace('.cue', '.VCD')
             print('[SETUP] Resuming copying process...')
-        shutil.copy(gamePath, f'{root}\\POPS\\{game_name}')
+        shutil.copy(gamePath, f'{setupFolder}\\POPS\\{game_name}')
         print(f'[SETUP] Game copied!')
         print(f'[SETUP] Creating POPStarter ELF file...')
         shutil.copy(f'{root}\\POPStarter_Quickstarter\\POPSTARTER.ELF', f'{root}\\POPS\\XX.{game_name.replace('.VCD', '')}.ELF')            
