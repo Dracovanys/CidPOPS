@@ -29,6 +29,10 @@ def convert_VCD(cuePath, attempt = 1):
     # Converting CUE file to VCD
     cmd = subprocess.Popen(f'cmd /k {root}\\util\\CUE2POPS\\CUE2POPS.EXE "{cuePath}"', shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     out, err = cmd.communicate()
+    
+    if str(out).find('Cannot open') != -1:
+        print(f'[TOOL][ERROR] There is some problem with CUE file and its BINs, please check it! Skipping game...')
+        return 'ERROR'
 
     # Treatment for Multi-Track CUE file
     if str(out).find('splitted dumps') != -1:
@@ -39,3 +43,7 @@ def convert_VCD(cuePath, attempt = 1):
     
     print('[TOOL] Conversion process complete!')
     return cuePath.replace('.cue', '.VCD')
+
+# Get MD5 hash from a file
+def get_md5(filePath):
+    return str(subprocess.run(f'certutil -hashfile "{filePath}" MD5', capture_output=True)).split('\\r\\n')[1]

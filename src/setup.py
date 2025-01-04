@@ -4,8 +4,21 @@ import wget
 import zipfile
 import shutil
 import os
-import src.tool as tool
 from bs4 import BeautifulSoup
+
+if __name__ == "__main__":
+    import tool
+else:
+    import src.tool as tool
+
+class POP():
+    def __init__(self, name, vcd_md5, cue_md5):
+        self.name = name
+        self.vcd_md5 = vcd_md5
+        self.cue_md5 = cue_md5
+    
+    def __str__(self):
+        return f'[Name: {self.name} | VCD_MD5: {self.vcd_md5} | CUE_MD5: {self.cue_md5}]'
 
 root = os.path.dirname(os.path.abspath(__file__)).replace('\\src', '')
 # Build root = os.path.dirname(os.path.abspath(sys.argv[0].replace('\\CidPOPS.exe', '')))
@@ -110,6 +123,41 @@ def get_popstarter(setupType = 'usb'):
     os.rename(f'{setupFolder}\\{file}', f'{setupFolder}\\POPStarter_Quickstarter')    
     print(f'[SETUP] Extraction complete!')
 
+# Return a list of all VCD files (with its MD5 hashes) already setup on POPS folder
+def get_pops(pops_folder):
+
+    # Get/Create "pops.cid" file
+    pops = []
+    if not os.path.exists(f'{pops_folder}\\pops.cid'):
+        print('[SETUP] "pops.cid" file not found! Creating it...')
+
+        # Get all VCD files on folder
+        vcd_files = []
+        for file in os.listdir(pops_folder):
+            if str(file).find('.VCD') != -1:
+                vcd_files.append(str(file))
+        
+        # Get MD5 hash from file and create "pops.cid" file
+        for file in vcd_files:
+            pop = POP(file, tool.get_md5(f'{pops_folder}\\{file}'),'None')
+            pops.append(pop)
+        
+        with open(f'{pops_folder}\\pops.cid', 'w') as file:
+            for pop in pops:
+                file.write(f'{pop.name}, {pop.vcd_md5}, {pop.cue_md5}\n')
+                print(f'[SETUP] Game found: {pop.name}')
+        print(f'[SETUP] "pops.cid" created.')
+    else:        
+        print('[SETUP] "pops.cid" file found! Getting games...')
+        with open(f'{pops_folder}\\pops.cid', 'r') as file:
+            for line in file.readlines():
+                _line = line.split(', ')
+                pop = POP(_line[0], _line[1], _line[2].replace('\n', ''))
+                print(f'[SETUP] Game found: {pop.name}')
+                pops.append(pop)
+    print('[SETUP] POPS folder loaded.')
+    return pops
+
 # Create "POPS" folder and put all files there ("POPS_IOX.PAK", VCD files and POPStarter ELFs for each VCD files)
 def create_popsFolder(popsIox_path, games, setupType = 'usb'):
 
@@ -125,16 +173,21 @@ def create_popsFolder(popsIox_path, games, setupType = 'usb'):
         os.makedirs(setupFolder)
 
     # Check if "POPS" folder is already created
+    pops = []
+    previous_pops_len = 0
+    pops_updated = False
     if os.path.exists(f'{setupFolder}\\POPS'):        
-        print('[SETUP] POPS folder found! Please, delete it to continue.')
-        return
+        print('[SETUP] POPS folder found! Getting games...')
+        pops = get_pops(f'{setupFolder}\\POPS')
+        previous_pops_len = len(pops)
+    else:
+        print('[SETUP] Creating POPS folder...')
+        os.makedirs(f'{setupFolder}\\POPS')
 
-    # Create POPS folder and move "POPS_IOX" to it
-    print('[SETUP] Creating POPS folder...')
-    os.makedirs(f'{setupFolder}\\POPS')
-
+    # Move "POPS_IOX" to POPS folder
     if os.path.exists(popsIox_path):
-        shutil.copy(popsIox_path, f'{setupFolder}\\POPS\\POPS_IOX.PAK')
+        if not os.path.exists(f'{setupFolder}\\POPS\\POPS_IOX.PAK'):
+            shutil.copy(popsIox_path, f'{setupFolder}\\POPS\\POPS_IOX.PAK')
     else:
         print('[SETUP] "POPS_IOX.PAK" not detected! Please put "POPS_IOX.PAK" file on the root of CidPOPS folder.')
         return
@@ -142,20 +195,63 @@ def create_popsFolder(popsIox_path, games, setupType = 'usb'):
     # Move games to "POPS" folder and create a POPStarter ELF for each one
     print('[SETUP] Moving games to "POPS" folder...')
     if type(games) == str:
+
+        # Get all game files inside specified "games" folder
         _games = []
         for file in os.listdir(games):
             if str(file.lower()).find('.cue') != -1 or str(file.lower()).find('.vcd') != -1:
                 _games.append(f'{games}\\{file}')
         games = _games
+    
+    # Convert games to VCD (if necessary) and copy to POPS folder
     for gamePath in games:
+        skip_copy = False
         game_name = gamePath[gamePath.rfind('\\') + 1:]
         print(f'[SETUP] Moving "{game_name}" to "POPS" folder...')
-        if str(gamePath).find('.cue') != -1:
+
+        # Get CUE_MD5 if CUE file
+        cue_md5 = 'None'
+        if gamePath.lower().find('.cue') != -1:
+            cue_md5 = tool.get_md5(gamePath)
+            for pop in pops:
+                if cue_md5 == pop.cue_md5:
+                    print(f'[SETUP] Game already present on "POPS" folder! (Same hash as (converted to VCD): "{pop.name}")')
+                    skip_copy = True
+
+        # Convert CUE to VCD
+        if str(gamePath).find('.cue') != -1 and not skip_copy:
             gamePath = tool.convert_VCD(gamePath)
+            if gamePath == 'ERROR':
+                continue
             game_name = game_name.replace('.cue', '.VCD')
-            print('[SETUP] Resuming copying process...')
-        shutil.copy(gamePath, f'{setupFolder}\\POPS\\{game_name}')
-        print(f'[SETUP] Game copied!')
-        print(f'[SETUP] Creating POPStarter ELF file...')
-        shutil.copy(f'{setupFolder}\\POPStarter_Quickstarter\\POPSTARTER.ELF', f'{setupFolder}\\POPS\\XX.{game_name.replace('.VCD', '')}.ELF')            
-        print(f'[SETUP] POPStarter ELF file created!')
+            print('[SETUP] Resuming move process...')
+
+        # Get VCD_MD5 if CUE file
+        if gamePath.lower().find('.vcd') != -1 and not skip_copy:
+            vcd_md5 = tool.get_md5(gamePath)
+            for pop in pops:
+                if vcd_md5 == pop.vcd_md5:
+                    print(f'[SETUP] Game already present on "POPS" folder! (Same hash as: "{pop.name}")')
+                    pop = POP(game_name, vcd_md5, cue_md5)
+                    skip_copy = True
+                    pops_updated = True
+
+        if not skip_copy:
+            shutil.copy(gamePath, f'{setupFolder}\\POPS\\{game_name}')
+            pops.append(POP(game_name, vcd_md5, cue_md5))
+            print(f'[SETUP] Game copied!')
+
+        if not os.path.exists(f'{setupFolder}\\POPS\\XX.{game_name.replace('.VCD', '').replace('.cue', '')}.ELF'):
+            shutil.copy(f'{setupFolder}\\POPStarter_Quickstarter\\POPSTARTER.ELF', f'{setupFolder}\\POPS\\XX.{game_name.lower().replace('.vcd', '').replace('.cue', '')}.ELF')            
+            print(f'[SETUP] POPStarter ELF file created!')
+
+    # Create/Update "pops.cid" file
+    if os.path.exists(f'{setupFolder}\\POPS\\pops.cid'):
+        text = f'[SETUP] "pops.cid" file updated!'
+    else:
+        text = f'[SETUP] "pops.cid" file created!'
+    if pops_updated or (len(pops) > previous_pops_len):
+        with open(f'{setupFolder}\\POPS\\pops.cid', 'w') as file:
+            for pop in pops:
+                file.write(f'{pop.name}, {pop.vcd_md5}, {pop.cue_md5}\n')
+            print(text)
