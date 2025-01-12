@@ -6,16 +6,19 @@ A tool to set up your POPS! Created based on the quickstart created by ShaolinAs
  - Conversion of CUE files to VCD format (CUE2POPS).
  - Merging of multiple tracks (binmerge).
  - Creation of POPSTARTER files for each VCD.
- - Automatic writing of the "conf_apps.cfg" file for POPS access in OPL.
+ - Automatic writting of the "conf_apps.cfg" file for POPS access in OPL.
+ - Deep verification of CUE and BIN files to prevent errors.
+ - Automated multi-disc setup.
 
 ## Usage/Example
 
 Currently, it is only possible to use CidPOPS on Windows OS through a terminal. Additionally, I have only programmed the setup for USB, but in the near future, I will be programming setups for SMB and HDD. Below is the help text for the program:
 
 ```
-usage: CidPOPS.exe [-h] [-c [CONVERTVCD]] [-m [MERGETRACKS]] [--opl] [--ps1_pfx] [games_dir] [pops_iox]
+usage: main.py [-h] [-c [CONVERTVCD]] [-m [MERGETRACKS]] [-md5 [GETMD5]] [--opl] [--ps1_pfx] [games_dir] [pops_iox]
 
-A tool for setup your POPS! || By Dracovanys || Credits: israpps/ErikAndren (CUE2POPS); putnam/cgarz (binmerge); krHACKen/shaolinassassin (POPStarter)
+A tool to setup your POPS! || Version: 1.1 || By Dracovanys || Credits: israpps/ErikAndren (CUE2POPS); putnam/cgarz (binmerge); krHACKen/shaolinassassin
+(POPStarter)
 
 positional arguments:
   games_dir             Directory where all your PS1 games are stored.
@@ -27,8 +30,10 @@ options:
                         Convert a CUE file to VCD. (Usage.: -c "D:\Downloads\Crash Bandicoot (USA)\Crash Bandicoot (USA).cue")
   -m [MERGETRACKS], --mergeTracks [MERGETRACKS]
                         Merge tracks and generate a new CUE file. (Usage.: -m "D:\Downloads\Crash Bandicoot (USA)\Crash Bandicoot (USA).cue")
+  -md5 [GETMD5], --getMD5 [GETMD5]
+                        Return MD5 hash of a file. (Usage.: --md5 "D:\Downloads\Crash Bandicoot (USA)\Crash Bandicoot (USA).cue")
   --opl                 Just create "conf_apps.cfg" file.
-  --ps1_pfx             Add "PS1 - " prefix to all OPL shortcuts on "conf_apps.cfg" file (Ex.: "PS1 - Crash Bandicoot (USA)").
+  --ps1_pfx             Add "PS1_" prefix to all OPL shortcuts on "conf_apps.cfg" file (Ex.: "PS1 - Crash Bandicoot (USA)").
 ```
 
 ### POPS Setup (For USB only, at the moment)
@@ -98,8 +103,6 @@ After that, in the same folder as the CUE file, another folder with the "_Merged
 
  - Automated setup for SMB and HDD.
  - GUI using the Tkinter library.
- - Deep verification of CUE and BIN files to prevent errors.
- - Automated multi-disc setup.
 
 ## Credits and Acknowledgements
 

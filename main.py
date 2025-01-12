@@ -9,7 +9,7 @@ root = os.path.dirname(os.path.abspath(__file__))
 # Build root = os.path.dirname(os.path.abspath(sys.argv[0].replace('\\CidPOPS.exe', '')))
 
 # Setting up arguments
-parser = argparse.ArgumentParser(description='A tool to setup your POPS! || By Dracovanys || Credits: israpps/ErikAndren (CUE2POPS); putnam/cgarz (binmerge); krHACKen/shaolinassassin (POPStarter)')
+parser = argparse.ArgumentParser(description='A tool to setup your POPS! || Version: 1.1 || By Dracovanys || Credits: israpps/ErikAndren (CUE2POPS); putnam/cgarz (binmerge); krHACKen/shaolinassassin (POPStarter)')
 # parser.add_argument('setup_type', help='Specify setup type (usb, smb, hdd).')
 parser.add_argument('games_dir', nargs='?', help='Directory where all your PS1 games are stored.')
 parser.add_argument('pops_iox', nargs='?', help='Path to "POPS_IOX.PAK" if not on CidPOPS directory.')
@@ -17,7 +17,7 @@ parser.add_argument('-c', '--convertVCD', nargs='?', help='Convert a CUE file to
 parser.add_argument('-m', '--mergeTracks', nargs='?', help='Merge tracks and generate a new CUE file. (Usage.: -m "D:\\Downloads\\Crash Bandicoot (USA)\\Crash Bandicoot (USA).cue")')
 parser.add_argument('-md5', '--getMD5', nargs='?', help='Return MD5 hash of a file. (Usage.: --md5 "D:\\Downloads\\Crash Bandicoot (USA)\\Crash Bandicoot (USA).cue")')
 parser.add_argument('--opl', action='store_true', help='Just create "conf_apps.cfg" file.')
-parser.add_argument('--ps1_pfx', action='store_true', help='Add "PS1 - " prefix to all OPL shortcuts on "conf_apps.cfg" file (Ex.: "PS1 - Crash Bandicoot (USA)").')
+parser.add_argument('--ps1_pfx', action='store_true', help='Add "PS1_" prefix to all OPL shortcuts on "conf_apps.cfg" file (Ex.: "PS1_Crash Bandicoot (USA)").')
 args = parser.parse_args()
 
 # Convert VCD
