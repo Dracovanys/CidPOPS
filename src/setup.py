@@ -3,6 +3,7 @@ import requests
 import wget
 import zipfile
 import shutil
+from difflib import SequenceMatcher
 import os
 from bs4 import BeautifulSoup
 
@@ -50,7 +51,7 @@ def opl_setup(ps1_pfx: bool = True, setupType = 'usb'):
     for game in gameElfs:
         shortcutName = str(game).replace('XX.', '').replace('.ELF', '')
         if ps1_pfx:
-            shortcutName = f'PS1 - {shortcutName}'
+            shortcutName = f'PS1_{shortcutName}'
         with open(f'{setupFolder}\\conf_apps.cfg', 'a') as file:
             if setupType == 'usb':
                 file.write(f'{shortcutName}=mass:/POPS/{game}\n')
@@ -158,6 +159,50 @@ def get_pops(pops_folder):
     print('[SETUP] POPS folder loaded.')
     return pops
 
+# Create "DISCS.TXT" and VMCDIR.TXT for multi-disc games
+def multiDisc_setup(pops_folder):
+    print('[SETUP] Looking for multi-disc games...')
+
+    # Get all games with "Disc" tag
+    games = []
+    for file in os.listdir(pops_folder):
+        if file.find('Disc') != -1 and file.find('.VCD') != -1:
+            games.append(file)
+    if len(games) > 1:
+        print(f'[SETUP] {len(games)} multi-disc games found!')
+    else:
+        print(f'[SETUP] Less than 2 multi-disc games found. Skipping process...')
+        return
+
+    # Group each disc
+    games_discs = []
+    for game_main in games:
+        discs = [game_main]
+        for game_compare in games:
+            if game_compare == game_main:
+                continue
+            if SequenceMatcher(None, game_main, game_compare).ratio() * 100 >= 95.0:
+                discs.append(game_compare)
+                games.remove(game_compare)
+        discs.sort()
+        games_discs.append(discs)
+    
+    # Create "DISCS.TXT"
+    for game in games_discs:
+        if len(game) > 4:
+            print(f'[SETUP] "{game[0]}" ')
+        for disc in game:
+            print(f'[SETUP] Creating {disc.replace('.VCD', '').replace('.vcd', '')} folder...')
+            if not os.path.exists(f'{pops_folder}\\{disc.replace('.VCD', '').replace('.vcd', '')}'):
+                os.makedirs(f'{pops_folder}\\{disc.replace('.VCD', '').replace('.vcd', '')}')
+            with open(f'{pops_folder}\\{disc.replace('.VCD', '').replace('.vcd', '')}\\VMCDIR.TXT', 'w') as file:
+                file.write(game[0].replace('.VCD', '').replace('.vcd', ''))
+            with open(f'{pops_folder}\\{disc.replace('.VCD', '').replace('.vcd', '')}\\DISCS.TXT', 'w') as file:
+                for disc in game:
+                    file.write(f'{disc}\n')
+        
+    print('[SETUP] All multi-disc games setup!')
+
 # Create "POPS" folder and put all files there ("POPS_IOX.PAK", VCD files and POPStarter ELFs for each VCD files)
 def create_popsFolder(popsIox_path, games, setupType = 'usb'):
 
@@ -239,11 +284,14 @@ def create_popsFolder(popsIox_path, games, setupType = 'usb'):
         if not skip_copy:
             shutil.copy(gamePath, f'{setupFolder}\\POPS\\{game_name}')
             pops.append(POP(game_name, vcd_md5, cue_md5))
-            print(f'[SETUP] Game copied!')
+            print(f'[SETUP] Game copied!')        
 
         if not os.path.exists(f'{setupFolder}\\POPS\\XX.{game_name.replace('.VCD', '').replace('.cue', '')}.ELF'):
-            shutil.copy(f'{setupFolder}\\POPStarter_Quickstarter\\POPSTARTER.ELF', f'{setupFolder}\\POPS\\XX.{game_name.lower().replace('.vcd', '').replace('.cue', '')}.ELF')            
+            shutil.copy(f'{setupFolder}\\POPStarter_Quickstarter\\POPSTARTER.ELF', f'{setupFolder}\\POPS\\XX.{game_name.replace('.VCD', '').replace('.cue', '')}.ELF')            
             print(f'[SETUP] POPStarter ELF file created!')
+
+    # Setting up multi-disc games    
+    multiDisc_setup(f'{setupFolder}\\POPS')
 
     # Create/Update "pops.cid" file
     if os.path.exists(f'{setupFolder}\\POPS\\pops.cid'):

@@ -15,7 +15,7 @@ parser.add_argument('games_dir', nargs='?', help='Directory where all your PS1 g
 parser.add_argument('pops_iox', nargs='?', help='Path to "POPS_IOX.PAK" if not on CidPOPS directory.')
 parser.add_argument('-c', '--convertVCD', nargs='?', help='Convert a CUE file to VCD. (Usage.: -c "D:\\Downloads\\Crash Bandicoot (USA)\\Crash Bandicoot (USA).cue")')
 parser.add_argument('-m', '--mergeTracks', nargs='?', help='Merge tracks and generate a new CUE file. (Usage.: -m "D:\\Downloads\\Crash Bandicoot (USA)\\Crash Bandicoot (USA).cue")')
-parser.add_argument('-md5', '--getMd5', nargs='?', help='Return MD5 hash of a file. (Usage.: --md5 "D:\\Downloads\\Crash Bandicoot (USA)\\Crash Bandicoot (USA).cue")')
+parser.add_argument('-md5', '--getMD5', nargs='?', help='Return MD5 hash of a file. (Usage.: --md5 "D:\\Downloads\\Crash Bandicoot (USA)\\Crash Bandicoot (USA).cue")')
 parser.add_argument('--opl', action='store_true', help='Just create "conf_apps.cfg" file.')
 parser.add_argument('--ps1_pfx', action='store_true', help='Add "PS1 - " prefix to all OPL shortcuts on "conf_apps.cfg" file (Ex.: "PS1 - Crash Bandicoot (USA)").')
 args = parser.parse_args()
