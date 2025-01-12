@@ -131,7 +131,7 @@ def get_pops(pops_folder):
     pops = []
     if not os.path.exists(f'{pops_folder}\\pops.cid'):
         print('[SETUP] "pops.cid" file not found! Creating it...')
-
+        
         # Get all VCD files on folder
         vcd_files = []
         for file in os.listdir(pops_folder):
@@ -139,16 +139,16 @@ def get_pops(pops_folder):
                 vcd_files.append(str(file))
         
         # Get MD5 hash from file and create "pops.cid" file
-        for file in vcd_files:
-            pop = POP(file, tool.get_md5(f'{pops_folder}\\{file}'),'None')
-            pops.append(pop)
-        
-        with open(f'{pops_folder}\\pops.cid', 'w') as file:
-            for pop in pops:
-                file.write(f'{pop.name}, {pop.vcd_md5}, {pop.cue_md5}\n')
-                print(f'[SETUP] Game found: {pop.name}')
+        for file in vcd_files:            
+            with open(f'{pops_folder}\\pops.cid', 'a') as cidFile:
+                pop = POP(file, tool.get_md5(f'{pops_folder}\\{file}'), 'None')
+                pops.append(pop)
+                cidFile.write(f'{pop.name}, {pop.vcd_md5}, {pop.cue_md5}\n')
+                print(f'[SETUP] Game found: {file}')
         print(f'[SETUP] "pops.cid" created.')
-    else:        
+    else:
+
+        # Read "pops.cid" file
         print('[SETUP] "pops.cid" file found! Getting games...')
         with open(f'{pops_folder}\\pops.cid', 'r') as file:
             for line in file.readlines():
@@ -192,9 +192,12 @@ def multiDisc_setup(pops_folder):
         if len(game) > 4:
             print(f'[SETUP] "{game[0]}" ')
         for disc in game:
-            print(f'[SETUP] Creating {disc.replace('.VCD', '').replace('.vcd', '')} folder...')
             if not os.path.exists(f'{pops_folder}\\{disc.replace('.VCD', '').replace('.vcd', '')}'):
+                print(f'[SETUP] Creating {disc.replace('.VCD', '').replace('.vcd', '')} folder...')
                 os.makedirs(f'{pops_folder}\\{disc.replace('.VCD', '').replace('.vcd', '')}')
+            else:
+                print(f'[SETUP] {disc.replace('.VCD', '').replace('.vcd', '')} folder already created. Skipping...')
+                continue
             with open(f'{pops_folder}\\{disc.replace('.VCD', '').replace('.vcd', '')}\\VMCDIR.TXT', 'w') as file:
                 file.write(game[0].replace('.VCD', '').replace('.vcd', ''))
             with open(f'{pops_folder}\\{disc.replace('.VCD', '').replace('.vcd', '')}\\DISCS.TXT', 'w') as file:
@@ -271,15 +274,17 @@ def create_popsFolder(popsIox_path, games, setupType = 'usb'):
             game_name = game_name.replace('.cue', '.VCD')
             print('[SETUP] Resuming move process...')
 
-        # Get VCD_MD5 if CUE file
+        # Get VCD_MD5
         if gamePath.lower().find('.vcd') != -1 and not skip_copy:
             vcd_md5 = tool.get_md5(gamePath)
             for pop in pops:
                 if vcd_md5 == pop.vcd_md5:
                     print(f'[SETUP] Game already present on "POPS" folder! (Same hash as: "{pop.name}")')
-                    pop = POP(game_name, vcd_md5, cue_md5)
                     skip_copy = True
-                    pops_updated = True
+                    
+                    if pop.cue_md5 == 'None':
+                        pop.cue_md5 = cue_md5
+                        pops_updated = True
 
         if not skip_copy:
             shutil.copy(gamePath, f'{setupFolder}\\POPS\\{game_name}')
