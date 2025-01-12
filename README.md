@@ -52,7 +52,7 @@ CidPOPS.exe [Path to your BINs and CUEs folder]
 Ex.: CidPOPS.exe "D:\Games\PS1"
 ```
 
-If you are using OPL, you can add the tag "--ps1_pfx" after the path to the game folder so that the shortcuts created in the "conf_apps.cfg" file have the prefix "PS1 - ":
+If you are using OPL, you can add the tag "--ps1_pfx" after the path to the game folder so that the shortcuts created in the "conf_apps.cfg" file have the prefix "PS1_":
 
 ```
 CidPOPS.exe "D:\Games\PS1" --ps1_pfx
@@ -62,8 +62,8 @@ This way, the games will be more organized in the OPL apps list:
 
 ```
 Apollo Save Tool
-PS1 - Crash Bandicoot (USA)
-PS1 - Final Fantasy IX (USA)
+PS1_Crash Bandicoot (USA)
+PS1_Final Fantasy IX (USA) (Disc 1)
 uLaunchELF
 ```
 
